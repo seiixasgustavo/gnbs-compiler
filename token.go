@@ -23,8 +23,8 @@ type TokenType int
 
 const (
 	// Single character tokens
-	LParenteses TokenType = iota
-	RParenteses
+	LParentheses TokenType = iota
+	RParentheses
 	LBrace
 	RBrace
 	Comma
@@ -45,6 +45,12 @@ const (
 	Less
 	LessEqual
 
+	// Identifier
+	Identifier
+	String
+	Integer
+	Float
+
 	//Keywords
 	And
 	Or
@@ -62,17 +68,17 @@ const (
 
 var tokens = [...]string{
 	// Single character tokens
-	LParenteses: "(",
-	RParenteses: ")",
-	LBrace:      "{",
-	RBrace:      "}",
-	Comma:       ",",
-	Dot:         ".",
-	Minus:       "-",
-	Plus:        "+",
-	Semicolon:   ";",
-	Slash:       "/",
-	Star:        "*",
+	LParentheses: "(",
+	RParentheses: ")",
+	LBrace:       "{",
+	RBrace:       "}",
+	Comma:        ",",
+	Dot:          ".",
+	Minus:        "-",
+	Plus:         "+",
+	Semicolon:    ";",
+	Slash:        "/",
+	Star:         "*",
 
 	// One or two character tokens
 	Not:          "!",
