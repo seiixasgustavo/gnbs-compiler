@@ -1,29 +1,30 @@
 package GNBS
 
 import (
+	"GNBS/token"
 	"strconv"
 )
 
-var keywords map[string]TokenType
+var keywords map[string]token.Type
 
 func init() {
-	keywords = make(map[string]TokenType)
+	keywords = make(map[string]token.Type)
 
-	keywords[tokens[And]] = And
-	keywords[tokens[Or]] = Or
-	keywords[tokens[If]] = If
-	keywords[tokens[Else]] = Else
-	keywords[tokens[Var]] = Var
-	keywords[tokens[Func]] = Func
-	keywords[tokens[Struct]] = Struct
-	keywords[tokens[Return]] = Return
-	keywords[tokens[True]] = True
-	keywords[tokens[False]] = False
+	keywords[token.Lexeme[token.And]] = token.And
+	keywords[token.Lexeme[token.Or]] = token.Or
+	keywords[token.Lexeme[token.If]] = token.If
+	keywords[token.Lexeme[token.Else]] = token.Else
+	keywords[token.Lexeme[token.Var]] = token.Var
+	keywords[token.Lexeme[token.Func]] = token.Func
+	keywords[token.Lexeme[token.Struct]] = token.Struct
+	keywords[token.Lexeme[token.Return]] = token.Return
+	keywords[token.Lexeme[token.True]] = token.True
+	keywords[token.Lexeme[token.False]] = token.False
 }
 
 type Scanner struct {
 	source string
-	tokens []Token
+	Lexeme []token.Token
 
 	start   uint
 	current uint
@@ -73,7 +74,7 @@ func (s *Scanner) string() {
 
 	s.advance()
 	value := s.source[s.start+1 : s.current]
-	s.addTokenToList(String, value)
+	s.addTokenToList(token.String, value)
 }
 
 func (s *Scanner) number() {
@@ -92,10 +93,10 @@ func (s *Scanner) number() {
 
 	if isFloat {
 		value, _ := strconv.ParseFloat(s.source[s.start:s.current], 64)
-		s.addTokenToList(Float, value)
+		s.addTokenToList(token.Float, value)
 	} else {
 		value, _ := strconv.ParseInt(s.source[s.start:s.current], 10, 64)
-		s.addTokenToList(Integer, value)
+		s.addTokenToList(token.Integer, value)
 	}
 }
 
@@ -103,7 +104,7 @@ func (s *Scanner) identifier() {
 	for s.isAlphaNumeric(s.peek()) {
 		s.advance()
 	}
-	s.addToken(Identifier)
+	s.addToken(token.Identifier)
 }
 
 func (s *Scanner) isAlpha(char string) bool {
@@ -119,95 +120,96 @@ func (s *Scanner) isAlphaNumeric(char string) bool {
 }
 
 func (s *Scanner) isAtEnd() bool {
-	return uint(len(tokens)) <= s.current
+	return uint(len(token.Lexeme)) <= s.current
 }
 
-func (s *Scanner) addToken(token TokenType) {
+func (s *Scanner) addToken(token token.Type) {
 	s.addTokenToList(token, nil)
 }
 
-func (s *Scanner) addTokenToList(token TokenType, literal interface{}) {
+func (s *Scanner) addTokenToList(tk token.Type, literal interface{}) {
 	text := s.source[s.start:s.current]
-	s.tokens = append(s.tokens, *NewToken(token, text, literal, s.line))
+	s.Lexeme = append(s.Lexeme, token.NewToken(tk, text, literal, s.line))
 }
 
-func (s *Scanner) ScanTokens() ([]Token, error) {
+func (s *Scanner) ScanLexeme() ([]token.Token, error) {
 	for !s.isAtEnd() {
 		s.start = s.current
 		s.scanToken()
 	}
-	s.tokens = append(s.tokens, *NewToken(Eof, "", nil, s.line))
-	return s.tokens, nil
+	s.Lexeme = append(s.Lexeme, token.NewToken(token.Eof, "", nil, s.line))
+	return s.Lexeme, nil
 }
 
 func (s *Scanner) scanToken() {
 	char := s.advance()
 	switch char {
-	case "(":
-		s.addToken(LParentheses)
+	case token.Lexeme[token.LParentheses]:
+		s.addToken(token.LParentheses)
 		break
-	case ")":
-		s.addToken(RParentheses)
+	case token.Lexeme[token.RParentheses]:
+		s.addToken(token.RParentheses)
 		break
-	case "{":
-		s.addToken(LBrace)
+	case token.Lexeme[token.LBrace]:
+		s.addToken(token.LBrace)
 		break
-	case "}":
-		s.addToken(RBrace)
+	case token.Lexeme[token.RBrace]:
+		s.addToken(token.RBrace)
 		break
-	case ",":
-		s.addToken(Comma)
+	case token.Lexeme[token.Comma]:
+		s.addToken(token.Comma)
 		break
-	case ".":
-		s.addToken(Dot)
+	case token.Lexeme[token.Dot]:
+		s.addToken(token.Dot)
 		break
-	case "-":
-		s.addToken(Minus)
+	case token.Lexeme[token.Minus]:
+		s.addToken(token.Minus)
 		break
-	case "+":
-		s.addToken(Plus)
+	case token.Lexeme[token.Plus]:
+		s.addToken(token.Plus)
 		break
-	case ";":
-		s.addToken(Semicolon)
+	case token.Lexeme[token.Semicolon]:
+		s.addToken(token.Semicolon)
 		break
-	case "*":
-		s.addToken(Star)
+	case token.Lexeme[token.Star]:
+		s.addToken(token.Star)
 		break
-	case "!":
-		if s.match("=") {
-			s.addToken(NotEqual)
+
+	case token.Lexeme[token.Not]:
+		if s.match(token.Lexeme[token.Equal]) {
+			s.addToken(token.NotEqual)
 		} else {
-			s.addToken(Not)
+			s.addToken(token.Not)
 		}
 		break
-	case "=":
-		if s.match("=") {
-			s.addToken(EqualEqual)
+	case token.Lexeme[token.Equal]:
+		if s.match(token.Lexeme[token.Equal]) {
+			s.addToken(token.EqualEqual)
 		} else {
-			s.addToken(Equal)
+			s.addToken(token.Equal)
 		}
 		break
-	case ">":
-		if s.match("=") {
-			s.addToken(GreaterEqual)
+	case token.Lexeme[token.Greater]:
+		if s.match(token.Lexeme[token.Equal]) {
+			s.addToken(token.GreaterEqual)
 		} else {
-			s.addToken(Greater)
+			s.addToken(token.Greater)
 		}
 		break
-	case "<":
-		if s.match("=") {
-			s.addToken(LessEqual)
+	case token.Lexeme[token.Less]:
+		if s.match(token.Lexeme[token.LessEqual]) {
+			s.addToken(token.LessEqual)
 		} else {
-			s.addToken(Less)
+			s.addToken(token.Less)
 		}
 		break
-	case "/":
-		if s.match("/") {
+	case token.Lexeme[token.Slash]:
+		if s.match(token.Lexeme[token.Slash]) {
 			for s.peek() != "\n" && !s.isAtEnd() {
 				s.advance()
 			}
 		} else {
-			s.addToken(Slash)
+			s.addToken(token.Slash)
 		}
 		break
 

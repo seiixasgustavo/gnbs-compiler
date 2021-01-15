@@ -1,29 +1,9 @@
-package GNBS
+package token
 
-import (
-	"fmt"
-)
-
-type Token struct {
-	tokenType TokenType
-	lexeme    string
-	literal   interface{}
-	line      uint
-}
-
-func NewToken(tokenType TokenType, lexeme string, literal interface{}, line uint) *Token {
-	return &Token{tokenType: tokenType, lexeme: lexeme, literal: literal, line: line}
-}
-
-func (t *Token) ToString() string {
-	return fmt.Sprintf("%s %s %v", tokens[t.tokenType], t.lexeme, t.literal)
-}
-
-type TokenType int
+type Type int
 
 const (
-	// Single character tokens
-	LParentheses TokenType = iota
+	LParentheses Type = iota
 	RParentheses
 	LBrace
 	RBrace
@@ -35,7 +15,6 @@ const (
 	Slash
 	Star
 
-	// One or two character tokens
 	Not
 	NotEqual
 	Equal
@@ -45,13 +24,11 @@ const (
 	Less
 	LessEqual
 
-	// Identifier
 	Identifier
 	String
 	Integer
 	Float
 
-	//Keywords
 	And
 	Or
 	If
@@ -66,7 +43,7 @@ const (
 	Eof
 )
 
-var tokens = [...]string{
+var Lexeme = [...]string{
 	// Single character tokens
 	LParentheses: "(",
 	RParentheses: ")",
