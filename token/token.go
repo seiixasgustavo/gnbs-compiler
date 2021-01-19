@@ -5,16 +5,16 @@ import (
 )
 
 type Token struct {
-	tokenType Type
-	lexeme    string
-	literal   interface{}
-	line      uint
+	TokenType Type
+	Lexeme    string
+	Literal   interface{}
+	Line      uint
 }
 
 func NewToken(tokenType Type, lexeme string, literal interface{}, line uint) Token {
-	return Token{tokenType: tokenType, lexeme: lexeme, literal: literal, line: line}
+	return Token{TokenType: tokenType, Lexeme: lexeme, Literal: literal, Line: line}
 }
 
 func (t *Token) ToString() string {
-	return fmt.Sprintf("%s", Lexeme[t.tokenType])
+	return fmt.Sprintf("%s", Lexeme[t.TokenType])
 }

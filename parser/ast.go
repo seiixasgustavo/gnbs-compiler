@@ -10,19 +10,19 @@ type AstPrinter struct {
 	Visitor
 }
 
-func (a AstPrinter) visitBinaryExpr(expr binary) string {
+func (a AstPrinter) visitBinaryExpr(expr binary) interface{} {
 	return a.parenthesize(expr.operator.ToString(), expr.left, expr.right)
 }
 
-func (a AstPrinter) visitGroupingExpr(expr grouping) string {
+func (a AstPrinter) visitGroupingExpr(expr grouping) interface{} {
 	return a.parenthesize("group", expr.expressions)
 }
 
-func (a AstPrinter) visitUnaryExpr(expr unary) string {
+func (a AstPrinter) visitUnaryExpr(expr unary) interface{} {
 	return a.parenthesize(expr.operator.ToString(), expr.right)
 }
 
-func (a AstPrinter) visitLiteralExpr(expr literal) string {
+func (a AstPrinter) visitLiteralExpr(expr literal) interface{} {
 	if expr.value == nil {
 		return "null"
 	}
@@ -43,7 +43,7 @@ func (a AstPrinter) visitLiteralExpr(expr literal) string {
 }
 
 func (a AstPrinter) print(expr Expr) string {
-	return expr.accept(a)
+	return expr.accept(a).(string)
 }
 
 func (a AstPrinter) parenthesize(name string, exprs ...Expr) string {
@@ -54,7 +54,7 @@ func (a AstPrinter) parenthesize(name string, exprs ...Expr) string {
 
 	for _, expr := range exprs {
 		builder.Write([]byte(" "))
-		builder.Write([]byte(expr.accept(a)))
+		builder.Write([]byte(expr.accept(a).(string)))
 	}
 	builder.Write([]byte(")"))
 

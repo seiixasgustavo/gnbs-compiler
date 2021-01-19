@@ -3,14 +3,14 @@ package parser
 import "GNBS/token"
 
 type Expr interface {
-	accept(Visitor) string
+	accept(Visitor) interface{}
 }
 
 type Visitor interface {
-	visitUnaryExpr(unary) string
-	visitBinaryExpr(binary) string
-	visitGroupingExpr(grouping) string
-	visitLiteralExpr(literal) string
+	visitUnaryExpr(unary) interface{}
+	visitBinaryExpr(binary) interface{}
+	visitGroupingExpr(grouping) interface{}
+	visitLiteralExpr(literal) interface{}
 }
 
 type unary struct {
@@ -18,7 +18,7 @@ type unary struct {
 	right    Expr
 }
 
-func (u unary) accept(visitor Visitor) string {
+func (u unary) accept(visitor Visitor) interface{} {
 	return visitor.visitUnaryExpr(u)
 }
 
@@ -28,7 +28,7 @@ type binary struct {
 	right    Expr
 }
 
-func (b binary) accept(visitor Visitor) string {
+func (b binary) accept(visitor Visitor) interface{} {
 	return visitor.visitBinaryExpr(b)
 }
 
@@ -36,7 +36,7 @@ type grouping struct {
 	expressions Expr
 }
 
-func (g grouping) accept(visitor Visitor) string {
+func (g grouping) accept(visitor Visitor) interface{} {
 	return visitor.visitGroupingExpr(g)
 }
 
@@ -44,6 +44,6 @@ type literal struct {
 	value interface{}
 }
 
-func (l literal) accept(visitor Visitor) string {
+func (l literal) accept(visitor Visitor) interface{} {
 	return visitor.visitLiteralExpr(l)
 }

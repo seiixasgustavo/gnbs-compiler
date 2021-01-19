@@ -33,12 +33,14 @@ const (
 	Or
 	If
 	Else
+	For
 	Var
 	Func
 	Struct
 	Return
 	True
 	False
+	Null
 
 	Eof
 )
@@ -72,12 +74,14 @@ var Lexeme = [...]string{
 	Or:     "ou",
 	If:     "si",
 	Else:   "autre",
+	For:    "pendant",
 	Var:    "var",
 	Func:   "fonction",
 	Struct: "struct",
 	Return: "revenir",
 	True:   "vrai",
 	False:  "faux",
+	Null:   "null",
 
 	Eof: "EOF",
 }
