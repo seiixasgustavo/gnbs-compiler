@@ -14,7 +14,7 @@ func (v *ValueArray) WriteValueArray(value Value) {
 	v.values = append(v.values, value)
 }
 
-func (v *ValueArray) AddConstant(value Value) OpCode {
+func (v *ValueArray) AddConstant(value Value) byte {
 	v.WriteValueArray(value)
-	return OpCode(len(v.values) - 1)
+	return byte(len(v.values) - 1)
 }

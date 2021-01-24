@@ -3,7 +3,7 @@ package compiler
 import "fmt"
 
 type Chunk struct {
-	Code      []OpCode
+	Code      []byte
 	Constants ValueArray
 	Lines     []int
 }
@@ -12,14 +12,13 @@ func NewChunk() *Chunk {
 	return &Chunk{}
 }
 
-func (c *Chunk) WriteChunk(bt OpCode, line int) {
+func (c *Chunk) WriteChunk(bt byte, line int) {
 	c.Code = append(c.Code, bt)
 	c.Lines = append(c.Lines, line)
 }
 
 func (c *Chunk) DisassembleChunk(name string) {
 	fmt.Printf("== %s ==\n", name)
-
 	for i := 0; i < len(c.Code); {
 		i = c.disassembleInstruction(i)
 	}
@@ -38,6 +37,16 @@ func (c *Chunk) disassembleInstruction(offset int) int {
 	switch opCode {
 	case OpConstant:
 		return c.constantInstruction("OP_CONSTANT", offset)
+	case OpAdd:
+		return c.simpleInstruction("OP_ADD", offset)
+	case OpSubtract:
+		return c.simpleInstruction("OP_SUBTRACT", offset)
+	case OpMultiply:
+		return c.simpleInstruction("OP_MULTIPLY", offset)
+	case OpDivide:
+		return c.simpleInstruction("OP_DIVIDE", offset)
+	case OpNegate:
+		return c.simpleInstruction("OP_NEGATE", offset)
 	case OpReturn:
 		return c.simpleInstruction("OP_RETURN", offset)
 	default:
