@@ -204,6 +204,7 @@ func (s *Scanner) identifierType() int {
 	case 'w':
 		return s.checkKeyword(1, 4, "hile", While)
 	}
+	return Identifier
 }
 
 func (s *Scanner) checkKeyword(start, length int, rest string, TokenType int) int {
