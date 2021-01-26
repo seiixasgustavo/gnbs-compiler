@@ -23,10 +23,13 @@ func NewVM() *VM {
 	return &VM{}
 }
 
-func (v *VM) Interpret(chunk *Chunk) InterpretResult {
-	v.chunk = chunk
-	v.ip = 0
-	return v.run()
+func (v *VM) Interpret(source []byte) InterpretResult {
+	v.compile(source)
+	return InterpretOk
+}
+
+func (v *VM) compile(source []byte) {
+	
 }
 
 func (v *VM) run() InterpretResult {
