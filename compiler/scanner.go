@@ -1,5 +1,7 @@
 package compiler
 
+import "fmt"
+
 type Scanner struct {
 	start   int
 	current int
@@ -17,8 +19,8 @@ func NewToken(tokenType int, source []byte, line int) *Token {
 	return &Token{TokenType: tokenType, source: source, line: line}
 }
 
-func NewScanner() *Scanner {
-	return &Scanner{start: 0, current: 0, line: 1}
+func NewScanner(source []byte) *Scanner {
+	return &Scanner{start: 0, current: 0, line: 1, source: source}
 }
 
 func (s *Scanner) ScanToken() *Token {
@@ -28,6 +30,14 @@ func (s *Scanner) ScanToken() *Token {
 	}
 
 	c := s.advance()
+	fmt.Println(string(c))
+
+	if s.isAlpha(c) {
+		return s.identifier()
+	}
+	if s.isDigit(c) {
+		return s.number()
+	}
 
 	switch c {
 	case '(':
@@ -133,10 +143,10 @@ func (s *Scanner) string() *Token {
 }
 
 func (s *Scanner) isDigit(char byte) bool {
-	return char < '0' && char > '9'
+	return char >= '0' && char <= '9'
 }
 func (s *Scanner) isAlpha(char byte) bool {
-	return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'z') || char == '_'
+	return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char == '_'
 }
 
 func (s *Scanner) number() *Token {

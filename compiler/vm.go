@@ -24,12 +24,16 @@ func NewVM() *VM {
 }
 
 func (v *VM) Interpret(source []byte) InterpretResult {
-	v.compile(source)
-	return InterpretOk
-}
+	chunk := NewChunk()
 
-func (v *VM) compile(source []byte) {
-	
+	if !Compile(source, chunk) {
+		return InterpretCompileError
+	}
+	vm.chunk = chunk
+	vm.ip = 0
+
+	result := vm.run()
+	return result
 }
 
 func (v *VM) run() InterpretResult {
