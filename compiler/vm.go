@@ -1,6 +1,26 @@
 package compiler
 
-import "fmt"
+import (
+	"GNBS/chunk"
+	"fmt"
+	"os"
+)
+
+const StackMax = 256
+
+type VM struct {
+	Chunk *chunk.Chunk
+	Ip    int
+
+	stack    []chunk.Value
+	stackTop int
+}
+
+var vm *VM
+
+func InitVM(ck *chunk.Chunk) {
+	vm = &VM{Chunk: ck, Ip: 0, stackTop: 0, stack: make([]chunk.Value, StackMax)}
+}
 
 type InterpretResult int
 
@@ -10,114 +30,127 @@ const (
 	InterpretRuntimeError
 )
 
-var vm *VM
-
-type VM struct {
-	chunk    *Chunk
-	ip       int
-	stack    [256]Value
-	stackTop int
-}
-
-func NewVM() *VM {
-	return &VM{}
-}
-
-func (v *VM) Interpret(source []byte) InterpretResult {
-	chunk := NewChunk()
-
+func (v *VM) interpret(source []byte) InterpretResult {
+	chunk := chunk.NewChunk()
 	if !Compile(source, chunk) {
 		return InterpretCompileError
 	}
-	vm.chunk = chunk
-	vm.ip = 0
 
-	result := vm.run()
-	return result
+	v.Chunk = chunk
+	v.Ip = 0
+
+	return v.run()
 }
 
 func (v *VM) run() InterpretResult {
 	for {
-		operation := v.readByte()
-		switch operation {
-		case OpConstant:
-			constant := v.readConstant()
-			v.push(constant)
-			fmt.Printf("%g\n", constant)
-		case OpAdd, OpSubtract, OpDivide, OpMultiply:
-			v.binaryOp(operation)
-			break
-		case OpNegate:
-			v.push(-v.pop())
-			break
-		case OpReturn:
-			printValue(v.pop())
+		instruction := readByte()
+
+		switch instruction {
+		case chunk.OpReturn:
+			chunk.PrintValue(pop())
 			fmt.Println()
 			return InterpretOk
+		case chunk.OpConstant:
+			constant := readConstant()
+			push(constant)
+			break
+		case chunk.OpNull:
+			push(chunk.Value{
+				Type:  chunk.TypeNull,
+				Value: nil,
+			})
+			break
+		case chunk.OpNot:
+			val := pop()
+			push(chunk.Value{
+				Type:  chunk.TypeBool,
+				Value: !val.Bool(),
+			})
+			break
+		case chunk.OpTrue:
+			push(chunk.Value{
+				Type:  chunk.TypeNull,
+				Value: true,
+			})
+			break
+		case chunk.OpFalse:
+			push(chunk.Value{
+				Type:  chunk.TypeNull,
+				Value: false,
+			})
+			break
+		case chunk.OpEqual:
+			val, val2 := pop(), pop()
+			push(chunk.Value{
+				Type:  chunk.TypeBool,
+				Value: val.Value == val2.Value,
+			})
+			break
+		case chunk.OpNegate:
+			if typ := peek(0); typ.Type != chunk.TypeInteger && typ.Type != chunk.TypeFloat {
+				runtimeError("Operand must be a number.")
+				return InterpretRuntimeError
+			}
+
+			val := pop()
+			if val.Type == chunk.TypeInteger {
+				val.Value = -val.Integer()
+			} else {
+				val.Value = -val.Float()
+			}
+			push(val)
+			break
+
+		case chunk.OpAdd, chunk.OpSubtract, chunk.OpMultiply, chunk.OpDivide:
+			result := binaryOperation(instruction)
+			if result != InterpretOk {
+				runtimeError("Operands must be numbers of the same type")
+				return InterpretRuntimeError
+			}
+			break
 		}
 	}
 }
 
-func (v *VM) resetStack() {
-	v.stackTop = 0
+func readByte() byte {
+	vm.Ip++
+	return vm.Chunk.Code[vm.Ip-1]
 }
 
-func (v *VM) push(value Value) {
-	v.stack[v.stackTop] = value
-	v.stackTop++
+func readConstant() chunk.Value {
+	index := readByte()
+	return vm.Chunk.Values[index]
 }
 
-func (v *VM) pop() Value {
-	v.stackTop--
-	return v.stack[v.stackTop]
+func resetStack() {
+	vm.stackTop = 0
+	vm.stack = []chunk.Value{}
 }
 
-func (v *VM) readByte() byte {
-	v.ip++
-	return v.chunk.Code[v.ip-1]
+func pop() chunk.Value {
+	vm.stackTop--
+	return vm.stack[vm.stackTop]
 }
 
-func (v *VM) readConstant() Value {
-	return v.chunk.Constants.values[v.readByte()]
+func push(value chunk.Value) {
+	vm.stackTop++
+	vm.stack[vm.stackTop-1] = value
 }
 
-func (v *VM) DebugTrace() {
-	fmt.Print("          ")
-
-	for i := 0; i < v.stackTop; i++ {
-		fmt.Print("[ ")
-		printValue(v.stack[i])
-		fmt.Print(" ]")
-	}
-	fmt.Println()
-
-	v.chunk.disassembleInstruction(v.ip)
+func peek(distance int) chunk.Value {
+	return vm.stack[vm.stackTop-1-distance]
 }
 
-func (v *VM) binaryOp(op byte) {
-	a := v.pop()
-	b := v.pop()
+// Errors
 
-	switch op {
+func runtimeError(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args)
+	fmt.Fprintln(os.Stderr)
 
-	case OpAdd:
-		v.push(a + b)
-		break
-	case OpSubtract:
-		v.push(a - b)
-		break
-	case OpMultiply:
-		v.push(a * b)
-		break
-	case OpDivide:
-		v.push(a / b)
-		break
+	pos := vm.Chunk.Pos[vm.Ip]
 
-	}
-}
+	fmt.Fprintf(os.Stderr, "[line %4d:%3d] in %s\n", pos.Line, pos.Column, pos.Filename)
 
-// Standalone Functions
-
-func printValue(value Value) {
-	fmt.Print(value)
+	resetStack()
 }

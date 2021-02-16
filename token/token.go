@@ -1,8 +1,9 @@
-package scanner
+package token
 
 import (
+	"fmt"
+	"go/token"
 	"strconv"
-	"unicode"
 )
 
 type TokenType int
@@ -12,6 +13,8 @@ const (
 	RParentheses
 	LBrace
 	RBrace
+	LBracket
+	RBracket
 	Comma
 	Dot
 	Minus
@@ -66,6 +69,8 @@ var tokens = [...]string{
 	RParentheses: ")",
 	LBrace:       "{",
 	RBrace:       "}",
+	LBracket:     "[",
+	RBracket:     "]",
 	Comma:        ",",
 	Dot:          ".",
 	Minus:        "-",
@@ -121,20 +126,6 @@ func (t TokenType) String() string {
 	return s
 }
 
-const (
-	PrecNone = iota
-	PrecAssignment
-	PrecOr
-	PrecAnd
-	PrecEquality
-	PrecComparison
-	PrecTerm
-	PrecFactor
-	PrecUnary
-	PrecCall
-	PrecPrimary
-)
-
 var keywords map[string]TokenType
 
 func init() {
@@ -156,21 +147,52 @@ func IsKeyword(name string) bool {
 	return ok
 }
 
-func IsIdentifier(name string) bool {
-	for i, c := range name {
-		if !unicode.IsLetter(c) && c != '_' && (i == 0 || !unicode.IsDigit(c)) {
-			return false
+// Precedence
+
+const (
+	PrecNone = iota
+	PrecAssignment
+	PrecOr
+	PrecAnd
+	PrecEquality
+	PrecComparison
+	PrecTerm
+	PrecFactor
+	PrecUnary
+	PrecCall
+	PrecPrimary
+)
+
+type Position struct {
+	Filename string
+	Offset   int
+	Line     int
+	Column   int
+}
+
+func GoTokenPosToPos(position token.Position) Position {
+	return Position{
+		Filename: position.Filename,
+		Offset:   position.Offset,
+		Line:     position.Line,
+		Column:   position.Column,
+	}
+}
+
+func (p *Position) IsValid() bool { return p.Line > 0 }
+func (p *Position) String() string {
+	s := ""
+	if p.IsValid() {
+		if s != "" {
+			s += ":"
+		}
+		s += fmt.Sprintf("%4d", p.Line)
+		if p.Column != 0 {
+			s += fmt.Sprintf(":%-3d", p.Column)
 		}
 	}
-	return name != "" && !IsKeyword(name)
-}
-func IsPossibleDoubleDigit(name string) bool {
-	tk, ok := keywords[name]
-	if !ok {
-		return false
+	if s == "" {
+		s = "-"
 	}
-	if tk > ddig_begin && tk < ddig_end {
-		return true
-	}
-	return false
+	return s
 }

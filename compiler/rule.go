@@ -1,56 +1,73 @@
 package compiler
 
+import "GNBS/token"
+
+type Precedence int
+
+const (
+	None Precedence = iota
+	Assignment
+	Or
+	And
+	Equality
+	Comparison
+	Term
+	Factor
+	Unary
+	Call
+	Primary
+)
+
 type ParseRule struct {
-	preffix    func()
+	prefix     func()
 	infix      func()
-	precedence int
+	precedence Precedence
 }
 
-func (p *Parser) initRules() []ParseRule {
-	return []ParseRule{
-		LParentheses: {p.grouping, nil, PrecNone},
-		RParentheses: {nil, nil, PrecNone},
-		LBrace:       {nil, nil, PrecNone},
-		RBrace:       {nil, nil, PrecNone},
-		Comma:        {nil, nil, PrecNone},
-		Dot:          {nil, nil, PrecNone},
-		Minus:        {p.unary, p.grouping, PrecTerm},
-		Plus:         {nil, p.binary, PrecTerm},
-		Semicolon:    {nil, nil, PrecNone},
-		Slash:        {nil, p.binary, PrecFactor},
-		Star:         {nil, p.binary, PrecFactor},
-		Not:          {nil, nil, PrecNone},
-		NotEqual:     {nil, nil, PrecNone},
-		Equal:        {nil, nil, PrecNone},
-		EqualEqual:   {nil, nil, PrecNone},
-		Greater:      {nil, nil, PrecNone},
-		GreaterEqual: {nil, nil, PrecNone},
-		Less:         {nil, nil, PrecNone},
-		LessEqual:    {nil, nil, PrecNone},
-		Identifier:   {nil, nil, PrecNone},
-		String:       {nil, nil, PrecNone},
-		Number:       {p.number, nil, PrecNone},
-		And:          {nil, nil, PrecNone},
-		Class:        {nil, nil, PrecNone},
-		Else:         {nil, nil, PrecNone},
-		False:        {nil, nil, PrecNone},
-		For:          {nil, nil, PrecNone},
-		Function:     {nil, nil, PrecNone},
-		If:           {nil, nil, PrecNone},
-		Null:         {nil, nil, PrecNone},
-		Or:           {nil, nil, PrecNone},
-		Print:        {nil, nil, PrecNone},
-		Return:       {nil, nil, PrecNone},
-		Super:        {nil, nil, PrecNone},
-		This:         {nil, nil, PrecNone},
-		True:         {nil, nil, PrecNone},
-		Var:          {nil, nil, PrecNone},
-		While:        {nil, nil, PrecNone},
-		Error:        {nil, nil, PrecNone},
-		Eof:          {nil, nil, PrecNone},
+var rules []ParseRule
+
+func init() {
+	rules = []ParseRule{
+		token.LParentheses: {grouping, nil, None},
+		token.RParentheses: {nil, nil, None},
+		token.LBrace:       {nil, nil, None},
+		token.RBrace:       {nil, nil, None},
+		token.Comma:        {nil, nil, None},
+		token.Dot:          {nil, nil, None},
+		token.Minus:        {unary, binary, Term},
+		token.Plus:         {nil, grouping, Term},
+		token.Semicolon:    {nil, nil, None},
+		token.Slash:        {nil, binary, Factor},
+		token.Star:         {nil, binary, Factor},
+		token.Not:          {unary, nil, None},
+		token.NotEqual:     {nil, binary, Equality},
+		token.Equal:        {nil, nil, None},
+		token.EqualEqual:   {nil, binary, Equality},
+		token.Less:         {nil, binary, Comparison},
+		token.LessEqual:    {nil, binary, Comparison},
+		token.Greater:      {nil, binary, Comparison},
+		token.GreaterEqual: {nil, binary, Comparison},
+		token.Identifier:   {nil, nil, None},
+		token.String:       {nil, nil, None},
+		token.Float:        {number, nil, None},
+		token.Integer:      {nil, nil, None},
+		token.And:          {nil, nil, None},
+		token.Or:           {nil, nil, None},
+		token.Class:        {nil, nil, None},
+		token.Function:     {nil, nil, None},
+		token.True:         {literal, nil, None},
+		token.False:        {literal, nil, None},
+		token.For:          {nil, nil, None},
+		token.If:           {nil, nil, None},
+		token.Else:         {nil, nil, None},
+		token.Null:         {nil, nil, None},
+		token.Return:       {nil, nil, None},
+		token.This:         {nil, nil, None},
+		token.Error:        {nil, nil, None},
+		token.Eof:          {nil, nil, None},
 	}
 }
 
-func (p *Parser) getRule(tokenType int) *ParseRule {
-	return &p.rules[tokenType]
+func getRule(tokenType token.TokenType) *ParseRule {
+	return &rules[tokenType]
 }

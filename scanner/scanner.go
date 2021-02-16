@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	token2 "GNBS/token"
 	"bytes"
 	"fmt"
 	"go/token"
@@ -13,10 +14,12 @@ import (
 type ErrorHandler func(pos token.Position, msg string)
 
 type Scanner struct {
-	file *token.File
-	dir  string
-	src  []byte
-	err  ErrorHandler
+	file    *token.File
+	fileset *token.FileSet
+
+	dir string
+	src []byte
+	err ErrorHandler
 
 	ch         rune
 	offset     int
@@ -30,11 +33,15 @@ type Scanner struct {
 
 type Token struct {
 	Position token.Pos
-	Token    TokenType
+	Token    token2.TokenType
 	LitName  string
 }
 
-func NewScanner(file *token.File, src []byte, err ErrorHandler) *Scanner {
+func NewScanner(src []byte, err ErrorHandler) *Scanner {
+
+	fset := token.NewFileSet()
+	file := fset.AddFile("", fset.Base(), len(src))
+
 	if file.Size() != len(src) {
 		panic(fmt.Sprintf("file size (%d) does not match src len (%d)", file.Size(), len(src)))
 	}
@@ -42,6 +49,7 @@ func NewScanner(file *token.File, src []byte, err ErrorHandler) *Scanner {
 	dir, _ := filepath.Split(file.Name())
 	scanner := &Scanner{
 		file:       file,
+		fileset:    fset,
 		dir:        dir,
 		src:        src,
 		err:        err,
@@ -71,15 +79,15 @@ scanAgain:
 	case isLetter(ch):
 		token.LitName = s.scanIdentifier()
 		if len(token.LitName) > 1 {
-			token.Token = Lookup(token.LitName)
+			token.Token = token2.Lookup(token.LitName)
 
 			switch token.Token {
-			case Identifier, Return, Break:
+			case token2.Identifier, token2.Return, token2.Break:
 				insertSemi = true
 			}
 		} else {
 			insertSemi = true
-			token.Token = Identifier
+			token.Token = token2.Identifier
 		}
 
 	case isDecimal(ch) || ch == '.' && isDecimal(rune(s.peek())):
@@ -94,36 +102,46 @@ scanAgain:
 		case -1:
 			if s.insertSemi {
 				s.insertSemi = false
-				token.Token, token.LitName = Semicolon, "\n"
+				token.Token, token.LitName = token2.Semicolon, "\n"
 				return token
 			}
-			token.Token = Eof
+			token.Token = token2.Eof
 		case '\n':
 			s.insertSemi = false
-			token.Token, token.LitName = Semicolon, "\n"
+			token.Token, token.LitName = token2.Semicolon, "\n"
 			return token
 		case '"':
 			insertSemi = true
-			token.Token = String
+			token.Token = token2.String
 			token.LitName = s.scanString()
 		case '.':
-			token.Token = Dot
+			token.Token = token2.Dot
 		case ',':
-			token.Token = Comma
+			token.Token = token2.Comma
 		case ';':
-			token.Token = Semicolon
+			token.Token = token2.Semicolon
 			token.LitName = ";"
 		case '(':
-			token.Token = LParentheses
+			token.Token = token2.LParentheses
 		case ')':
 			insertSemi = true
-			token.Token = RParentheses
+			token.Token = token2.RParentheses
+		case '[':
+			token.Token = token2.LBracket
+		case ']':
+			insertSemi = true
+			token.Token = token2.RBracket
+		case '{':
+			token.Token = token2.LBrace
+		case '}':
+			insertSemi = true
+			token.Token = token2.RBrace
 		case '+':
-			token.Token = Plus
+			token.Token = token2.Plus
 		case '-':
-			token.Token = Minus
+			token.Token = token2.Minus
 		case '*':
-			token.Token = Star
+			token.Token = token2.Star
 		case '/':
 			if s.ch == '/' || s.ch == '*' {
 				if s.insertSemi && s.findLineEnd() {
@@ -137,17 +155,17 @@ scanAgain:
 				s.insertSemi = false
 				goto scanAgain
 			} else {
-				token.Token = Slash
+				token.Token = token2.Slash
 			}
 		case '<':
-			token.Token = s.switch2(Less, LessEqual)
+			token.Token = s.switch2(token2.Less, token2.LessEqual)
 		case '=':
-			token.Token = s.switch2(Equal, EqualEqual)
+			token.Token = s.switch2(token2.Equal, token2.EqualEqual)
 		case '!':
-			token.Token = s.switch2(Not, NotEqual)
+			token.Token = s.switch2(token2.Not, token2.NotEqual)
 		default:
 			insertSemi = s.insertSemi
-			token.Token = Illegal
+			token.Token = token2.Illegal
 			token.LitName = string(ch)
 		}
 	}
@@ -289,9 +307,9 @@ func (s *Scanner) scanString() string {
 	return string(s.src[offs:s.offset])
 }
 
-func (s *Scanner) scanNumber() (TokenType, string) {
+func (s *Scanner) scanNumber() (token2.TokenType, string) {
 	offs := s.offset
-	tk := &Token{Token: Illegal}
+	tk := &Token{Token: token2.Illegal}
 
 	base := 10
 	prefix := rune(0)
@@ -299,7 +317,7 @@ func (s *Scanner) scanNumber() (TokenType, string) {
 	invalid := -1
 
 	if s.ch != '.' {
-		tk.Token = Integer
+		tk.Token = token2.Integer
 		if s.ch == '0' {
 			s.next()
 			switch lower(s.ch) {
@@ -321,7 +339,7 @@ func (s *Scanner) scanNumber() (TokenType, string) {
 	}
 
 	if s.ch == '.' {
-		tk.Token = Float
+		tk.Token = token2.Float
 		if prefix == 'o' || prefix == 'b' {
 			s.error(s.offset, "invalid radix point")
 		}
@@ -334,7 +352,7 @@ func (s *Scanner) scanNumber() (TokenType, string) {
 	}
 
 	lit := string(s.src[offs:s.offset])
-	if tk.Token == Integer && invalid >= 0 {
+	if tk.Token == token2.Integer && invalid >= 0 {
 		s.errorf(invalid, "invalid digit %q in %s", lit[invalid-offs], litname(prefix))
 	}
 	if digsep&2 != 0 {
@@ -514,12 +532,22 @@ func (s *Scanner) digits(base int, invalid *int) (digsep int) {
 	}
 	return
 }
-func (s *Scanner) switch2(tok0, tok1 TokenType) TokenType {
+func (s *Scanner) switch2(tok0, tok1 token2.TokenType) token2.TokenType {
 	if s.ch == '=' {
 		s.next()
 		return tok1
 	}
 	return tok0
+}
+
+func (s *Scanner) GetPosition(pos token.Pos) *token2.Position {
+	position := s.fileset.Position(pos)
+	return &token2.Position{
+		Filename: position.Filename,
+		Offset:   position.Offset,
+		Line:     position.Line,
+		Column:   position.Column,
+	}
 }
 
 // Utils/Standalone Functions

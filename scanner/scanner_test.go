@@ -1,21 +1,22 @@
 package scanner
 
 import (
-	"go/token"
+	token2 "GNBS/token"
 	"testing"
 )
 
 func TestNewScanner(t *testing.T) {
-	src := []byte("const value = 10\nvar x = 10.0")
+	src := []byte(
+		`func main() {
+			var x = 10
+        }`)
 
-	fset := token.NewFileSet()
-	file := fset.AddFile("", fset.Base(), len(src))
-	s := NewScanner(file, src, nil)
+	s := NewScanner(src, nil)
 
 	for {
 		tk := s.Scan()
-		t.Logf("%s %s %q", fset.Position(tk.Position), tk.Token, tk.LitName)
-		if tk.Token == Eof {
+		t.Logf("%s %q", tk.Token, tk.LitName)
+		if tk.Token == token2.Eof {
 			break
 		}
 	}

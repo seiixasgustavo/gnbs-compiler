@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GNBS/compiler"
+	"GNBS/old"
 	"bufio"
 	"bytes"
 	"fmt"
@@ -22,7 +22,7 @@ func rootCommand() *cobra.Command {
 		Short: "Compiler",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			vm := compiler.NewVM()
+			vm := old.NewVM()
 			if len(args) == 0 {
 				repl(vm)
 			} else if len(args) == 1 {
@@ -37,7 +37,7 @@ func rootCommand() *cobra.Command {
 	return cmd
 }
 
-func repl(vm *compiler.VM) {
+func repl(vm *old.VM) {
 	reader := bufio.NewReader(os.Stdin)
 	var buffer bytes.Buffer
 	for {
@@ -48,14 +48,14 @@ func repl(vm *compiler.VM) {
 	}
 }
 
-func runFile(path string, vm *compiler.VM) {
+func runFile(path string, vm *old.VM) {
 	fileBytes := readFile(path)
 	result := vm.Interpret(fileBytes)
 
-	if result == compiler.InterpretCompileError {
+	if result == old.InterpretCompileError {
 		os.Exit(65)
 	}
-	if result == compiler.InterpretRuntimeError {
+	if result == old.InterpretRuntimeError {
 		os.Exit(70)
 	}
 }
