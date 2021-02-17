@@ -47,47 +47,47 @@ func (v *VM) run() InterpretResult {
 		instruction := readByte()
 
 		switch instruction {
-		case chunk.OpReturn:
+		case OpReturn:
 			chunk.PrintValue(pop())
 			fmt.Println()
 			return InterpretOk
-		case chunk.OpConstant:
+		case OpConstant:
 			constant := readConstant()
 			push(constant)
 			break
-		case chunk.OpNull:
+		case OpNull:
 			push(chunk.Value{
 				Type:  chunk.TypeNull,
 				Value: nil,
 			})
 			break
-		case chunk.OpNot:
+		case OpNot:
 			val := pop()
 			push(chunk.Value{
 				Type:  chunk.TypeBool,
 				Value: !val.Bool(),
 			})
 			break
-		case chunk.OpTrue:
+		case OpTrue:
 			push(chunk.Value{
 				Type:  chunk.TypeNull,
 				Value: true,
 			})
 			break
-		case chunk.OpFalse:
+		case OpFalse:
 			push(chunk.Value{
 				Type:  chunk.TypeNull,
 				Value: false,
 			})
 			break
-		case chunk.OpEqual:
+		case OpEqual:
 			val, val2 := pop(), pop()
 			push(chunk.Value{
 				Type:  chunk.TypeBool,
 				Value: val.Value == val2.Value,
 			})
 			break
-		case chunk.OpNegate:
+		case OpNegate:
 			if typ := peek(0); typ.Type != chunk.TypeInteger && typ.Type != chunk.TypeFloat {
 				runtimeError("Operand must be a number.")
 				return InterpretRuntimeError
@@ -102,7 +102,7 @@ func (v *VM) run() InterpretResult {
 			push(val)
 			break
 
-		case chunk.OpAdd, chunk.OpSubtract, chunk.OpMultiply, chunk.OpDivide:
+		case OpAdd, OpSubtract, OpMultiply, OpDivide:
 			result := binaryOperation(instruction)
 			if result != InterpretOk {
 				runtimeError("Operands must be numbers of the same type")

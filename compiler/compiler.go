@@ -83,10 +83,10 @@ func unary() {
 
 	switch operatorType {
 	case token.Not:
-		emitByte(chunk.OpNot)
+		emitByte(OpNot)
 		break
 	case token.Minus:
-		emitByte(chunk.OpNegate)
+		emitByte(OpNegate)
 		break
 	default:
 		return
@@ -100,34 +100,34 @@ func binary() {
 
 	switch operatorType {
 	case token.Plus:
-		emitByte(chunk.OpAdd)
+		emitByte(OpAdd)
 		break
 	case token.Minus:
-		emitByte(chunk.OpSubtract)
+		emitByte(OpSubtract)
 		break
 	case token.Star:
-		emitByte(chunk.OpMultiply)
+		emitByte(OpMultiply)
 		break
 	case token.Slash:
-		emitByte(chunk.OpDivide)
+		emitByte(OpDivide)
 		break
 	case token.NotEqual:
-		emitBytes(chunk.OpEqual, chunk.OpNot)
+		emitBytes(OpEqual, OpNot)
 		break
 	case token.EqualEqual:
-		emitByte(chunk.OpEqual)
+		emitByte(OpEqual)
 		break
 	case token.Greater:
-		emitByte(chunk.OpGreater)
+		emitByte(OpGreater)
 		break
 	case token.GreaterEqual:
-		emitBytes(chunk.OpLess, chunk.OpNot)
+		emitBytes(OpLess, OpNot)
 		break
 	case token.Less:
-		emitByte(chunk.OpLess)
+		emitByte(OpLess)
 		break
 	case token.LessEqual:
-		emitBytes(chunk.OpGreater, chunk.OpNot)
+		emitBytes(OpGreater, OpNot)
 	default:
 		break
 	}
@@ -136,26 +136,42 @@ func binary() {
 func literal() {
 	switch parser.previous.Token {
 	case token.False:
-		emitByte(chunk.OpFalse)
+		emitByte(OpFalse)
 		break
 	case token.Null:
-		emitByte(chunk.OpNull)
+		emitByte(OpNull)
 		break
 	case token.True:
-		emitByte(chunk.OpTrue)
+		emitByte(OpTrue)
 		break
 	default:
 		return
 	}
 }
 
-func number() {
+func floatnumber() {
 	value, _ := strconv.ParseFloat(parser.previous.LitName, 64)
 	valueDS := chunk.Value{
 		Type:  chunk.TypeFloat,
 		Value: value,
 	}
 	emitConstant(valueDS)
+}
+
+func intnumber() {
+	value, _ := strconv.ParseInt(parser.previous.LitName, 10, 64)
+	valueDS := chunk.Value{
+		Type: chunk.TypeInteger,
+		Value: value,
+	}
+	emitConstant(valueDS)
+}
+
+func stringvalue() {
+	emitConstant(chunk.Value{
+		Type:  chunk.TypeString,
+		Value: parser.previous.LitName,
+	})
 }
 
 func makeConstant(value chunk.Value) byte {
@@ -183,11 +199,11 @@ func emitBytes(by, by2 byte) {
 }
 
 func emitConstant(value chunk.Value) {
-	emitBytes(chunk.OpConstant, makeConstant(value))
+	emitBytes(OpConstant, makeConstant(value))
 }
 
 func emitReturn() {
-	emitByte(chunk.OpReturn)
+	emitByte(OpReturn)
 }
 
 // Compiling Chunk

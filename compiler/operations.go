@@ -2,7 +2,35 @@ package compiler
 
 import "GNBS/chunk"
 
+const (
+	OpReturn byte = iota
+	OpAdd
+	OpSubtract
+	OpMultiply
+	OpDivide
+	OpConstant
+	OpNegate
+	OpNull
+	OpTrue
+	OpFalse
+	OpNot
+	OpEqual
+	OpGreater
+	OpLess
+)
+
 func binaryOperation(operation byte) InterpretResult {
+	if operation == OpAdd {
+		val, val2 := peek(0), peek(1)
+		if val.Type == chunk.TypeString && val2.Type == chunk.TypeString {
+			val, val2 = pop(), pop()
+			push(chunk.Value{
+				Type:  chunk.TypeString,
+				Value: val.String() + val2.String(),
+			})
+		}
+	}
+
 	if val, val2 := peek(0), peek(1);
 		(val.Type != chunk.TypeFloat && val2.Type != chunk.TypeFloat) ||
 			(val.Type != chunk.TypeInteger && val2.Type != chunk.TypeInteger) {
@@ -21,13 +49,13 @@ func binaryOperation(operation byte) InterpretResult {
 	val2 := pop()
 
 	switch operation {
-	case chunk.OpAdd, chunk.OpSubtract, chunk.OpMultiply, chunk.OpDivide:
+	case OpAdd, OpSubtract, OpMultiply, OpDivide:
 		if val.Type == chunk.TypeInteger {
 			return binaryIntegerOperation(operation, val, val2)
 		} else {
 			return binaryFloatOperation(operation, val, val2)
 		}
-	case chunk.OpGreater, chunk.OpLess:
+	case OpGreater, OpLess:
 		return binaryComparison(operation, val, val2)
 	}
 	return InterpretRuntimeError
@@ -35,25 +63,25 @@ func binaryOperation(operation byte) InterpretResult {
 
 func binaryIntegerOperation(operation byte, val, val2 chunk.Value) InterpretResult {
 	switch operation {
-	case chunk.OpAdd:
+	case OpAdd:
 		push(chunk.Value{
 			Type:  chunk.TypeInteger,
 			Value: val.Integer() + val2.Integer(),
 		})
 		break
-	case chunk.OpNegate:
+	case OpNegate:
 		push(chunk.Value{
 			Type:  chunk.TypeInteger,
 			Value: val.Integer() - val2.Integer(),
 		})
 		break
-	case chunk.OpMultiply:
+	case OpMultiply:
 		push(chunk.Value{
 			Type:  chunk.TypeInteger,
 			Value: val.Integer() * val2.Integer(),
 		})
 		break
-	case chunk.OpDivide:
+	case OpDivide:
 		push(chunk.Value{
 			Type:  chunk.TypeInteger,
 			Value: val.Integer() / val2.Integer(),
@@ -64,25 +92,25 @@ func binaryIntegerOperation(operation byte, val, val2 chunk.Value) InterpretResu
 }
 func binaryFloatOperation(operation byte, val, val2 chunk.Value) InterpretResult {
 	switch operation {
-	case chunk.OpAdd:
+	case OpAdd:
 		push(chunk.Value{
 			Type:  chunk.TypeInteger,
 			Value: val.Float() + val2.Float(),
 		})
 		break
-	case chunk.OpNegate:
+	case OpNegate:
 		push(chunk.Value{
 			Type:  chunk.TypeInteger,
 			Value: val.Float() - val2.Float(),
 		})
 		break
-	case chunk.OpMultiply:
+	case OpMultiply:
 		push(chunk.Value{
 			Type:  chunk.TypeInteger,
 			Value: val.Float() * val2.Float(),
 		})
 		break
-	case chunk.OpDivide:
+	case OpDivide:
 		push(chunk.Value{
 			Type:  chunk.TypeInteger,
 			Value: val.Float() / val2.Float(),
@@ -93,13 +121,13 @@ func binaryFloatOperation(operation byte, val, val2 chunk.Value) InterpretResult
 func binaryComparison(operation byte, val, val2 chunk.Value) InterpretResult {
 	if val.Type == chunk.TypeFloat {
 		switch operation {
-		case chunk.OpGreater:
+		case OpGreater:
 			push(chunk.Value{
 				Type:  chunk.TypeBool,
 				Value: val.Float() > val2.Float(),
 			})
 			break
-		case chunk.OpLess:
+		case OpLess:
 			push(chunk.Value{
 				Type:  chunk.TypeBool,
 				Value: val.Float() < val2.Float(),
@@ -108,13 +136,13 @@ func binaryComparison(operation byte, val, val2 chunk.Value) InterpretResult {
 		return InterpretOk
 	} else {
 		switch operation {
-		case chunk.OpGreater:
+		case OpGreater:
 			push(chunk.Value{
 				Type:  chunk.TypeBool,
 				Value: val.Integer() > val2.Integer(),
 			})
 			break
-		case chunk.OpLess:
+		case OpLess:
 			push(chunk.Value{
 				Type:  chunk.TypeBool,
 				Value: val.Integer() < val2.Integer(),

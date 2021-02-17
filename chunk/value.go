@@ -1,5 +1,7 @@
 package chunk
 
+import "fmt"
+
 type ValueType int
 
 const (
@@ -33,4 +35,32 @@ func (v *Value) Float() float64 {
 func (v *Value) String() string {
 	value, _ := v.Value.(string)
 	return value
+}
+
+func PrintValue(value Value) {
+	switch value.Type {
+	case TypeBool:
+		if value.Bool() {
+			fmt.Println("true")
+		} else {
+			fmt.Println("false")
+		}
+		break
+	case TypeNull:
+		fmt.Println("null")
+		break
+	case TypeInteger:
+		fmt.Printf("%g", value.Integer())
+		break
+	case TypeFloat:
+		fmt.Printf("%g", value.Float())
+		break
+	case TypeString:
+		fmt.Print(value.String())
+		break
+	default:
+		fmt.Printf("%g", value.Value)
+		break
+	}
+
 }
