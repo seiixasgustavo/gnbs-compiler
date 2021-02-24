@@ -46,6 +46,26 @@ func DisassembleInstruction(c *chunk.Chunk, offset int) int {
 		return simpleInstruction("OP_GREATER", offset)
 	case OpLess:
 		return simpleInstruction("OP_LESS", offset)
+	case OpPrint:
+		return simpleInstruction("OP_PRINT", offset)
+	case OpPop:
+		return simpleInstruction("OP_POP", offset)
+	case OpDefineGlobal:
+		return constantInstruction("OP_DEFINE_GLOBAL", c, offset)
+	case OpGetLocal:
+		return byteInstruction("OP_GET_LOCAL", c, offset)
+	case OpSetLocal:
+		return byteInstruction("OP_SET_LOCAL", c, offset)
+	case OpGetGlobal:
+		return constantInstruction("OP_GET_GLOBAL", c, offset)
+	case OpJump:
+		return jumpInstruction("OP_JUMP", 1, c, offset)
+	case OpJumpIfFalse:
+		return jumpInstruction("OP_JUMP_IF_FALSE", 1, c, offset)
+	case OpLoop:
+		return jumpInstruction("OP_LOOP", -1, c, offset)
+	case OpCall:
+		return byteInstruction("OP_CALL", c, offset)
 	default:
 		fmt.Printf("Unknown OpCode %d\n", instruction)
 		return offset + 1
@@ -56,6 +76,7 @@ func simpleInstruction(name string, offset int) int {
 	fmt.Printf("%s\n", name)
 	return offset + 1
 }
+
 func constantInstruction(name string, c *chunk.Chunk, offset int) int {
 	constant := c.Code[offset+1]
 
@@ -63,4 +84,18 @@ func constantInstruction(name string, c *chunk.Chunk, offset int) int {
 	chunk.PrintValue(c.Values[constant])
 	fmt.Printf("'\n")
 	return offset + 2
+}
+
+func byteInstruction(name string, c *chunk.Chunk, offset int) int {
+	slot := c.Code[offset+1]
+	fmt.Printf("%-16s %4d\n", name, slot)
+	return offset + 2
+}
+
+func jumpInstruction(name string, sign uint16, c *chunk.Chunk, offset int) int {
+	jump := uint16(c.Code[offset + 1]) << 8
+	jump |= uint16(c.Code[offset + 2])
+
+	fmt.Printf("%-16s %4d -> %d\n", name, offset, uint16(offset) + 3 + sign * jump)
+	return offset + 3
 }

@@ -17,6 +17,21 @@ const (
 	OpEqual
 	OpGreater
 	OpLess
+	OpPrint
+	OpPop
+	OpDefineGlobal
+
+	OpGetGlobal
+	OpGetLocal
+	OpSetGlobal
+	OpSetLocal
+
+	OpJump
+	OpJumpIfFalse
+
+	OpLoop
+
+	OpCall
 )
 
 func binaryOperation(operation byte) InterpretResult {
@@ -26,7 +41,7 @@ func binaryOperation(operation byte) InterpretResult {
 			val, val2 = pop(), pop()
 			push(chunk.Value{
 				Type:  chunk.TypeString,
-				Value: val.String() + val2.String(),
+				Value: chunk.NewGString(val.String() + val2.String()),
 			})
 		}
 	}

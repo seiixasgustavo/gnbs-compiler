@@ -19,8 +19,8 @@ const (
 )
 
 type ParseRule struct {
-	prefix     func()
-	infix      func()
+	prefix     func(bool)
+	infix      func(bool)
 	precedence Precedence
 }
 
@@ -28,7 +28,7 @@ var rules []ParseRule
 
 func init() {
 	rules = []ParseRule{
-		token.LParentheses: {grouping, nil, None},
+		token.LParentheses: {grouping, callFn, Call},
 		token.RParentheses: {nil, nil, None},
 		token.LBrace:       {nil, nil, None},
 		token.RBrace:       {nil, nil, None},
@@ -47,12 +47,12 @@ func init() {
 		token.LessEqual:    {nil, binary, Comparison},
 		token.Greater:      {nil, binary, Comparison},
 		token.GreaterEqual: {nil, binary, Comparison},
-		token.Identifier:   {nil, nil, None},
+		token.Identifier:   {variable, nil, None},
 		token.String:       {stringvalue, nil, None},
 		token.Float:        {floatnumber, nil, None},
 		token.Integer:      {intnumber, nil, None},
-		token.And:          {nil, nil, None},
-		token.Or:           {nil, nil, None},
+		token.And:          {nil, and_, And},
+		token.Or:           {nil, or_, Or},
 		token.Class:        {nil, nil, None},
 		token.Function:     {nil, nil, None},
 		token.True:         {literal, nil, None},
