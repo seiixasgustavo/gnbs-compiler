@@ -1,7 +1,7 @@
 # GNBS Language Compiler
 
 This project will be a C++/Golang compiler using the French language.
-Its going to follow the strong typed iterative paradigm.
+It's going to follow the strong typed iterative paradigm.
 
 ## Syntax
 
